@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi Chii</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Marcellus&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_v('css/style.css')) }}">
+</head>
+<body>
+
+<!-- custom cursor -->
+<div id="cursor"></div>
+<div id="cursorRing"></div>
+
+<!-- ambient layers (always present, behind everything) -->
+<canvas id="storyCanvas"></canvas>
+<div id="nebula"></div>
+<div id="grain"></div>
+<div id="bar"></div>
+
+<!-- background music — drop your own "Calm Down" file at static/audio/calm-down.mp3 -->
+<audio id="bgm" loop preload="auto" src="{{ url_for('static', filename='audio/calm-down.mp3') }}"></audio>
+<button type="button" id="soundToggle" aria-label="toggle music" title="music">🔊</button>
+
+<!-- ===== INTRO: gather the light ===== -->
+<div id="intro">
+  <canvas id="introCanvas"></canvas>
+  <div id="introText">
+    <span class="ek">A sky built for you</span>
+    <span class="ln">Gather the light, Chi&nbsp;Chii.</span>
+    <span class="sub">Sweep slowly across the stars — collect them in your hand.</span>
+  </div>
+  <div id="introWhisper"></div>
+  <div id="enterPrompt">
+    <span class="glyph">it's ready · enter</span>
+    <div class="arrow"></div>
+  </div>
+</div>
+
+<!-- ===== OPENING: a heart falls, blooms into a heart-tree, then the question ===== -->
+<div id="gate">
+  <div class="gate-stage">
+    <div class="fallingHeart">❤️</div>
+    <svg class="heartTree" viewBox="0 0 200 260" aria-hidden="true">
+      <defs>
+        <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ff7286"/>
+          <stop offset="1" stop-color="#e11d3a"/>
+        </linearGradient>
+        <linearGradient id="bark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9b5a4a"/>
+          <stop offset="1" stop-color="#6f3a30"/>
+        </linearGradient>
+      </defs>
+      <path class="trunk" d="M93 252 C95 216 95 186 100 160 C105 186 105 216 107 252 Z" fill="url(#bark)"/>
+      <path class="branch" d="M100 178 C88 170 80 158 74 152 M100 174 C112 168 120 158 126 152" stroke="url(#bark)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path class="canopy" d="M100 158 C58 126 36 100 36 76 C36 54 55 42 73 51 C86 57 100 76 100 76 C100 76 114 57 127 51 C145 42 164 54 164 76 C164 100 142 126 100 158 Z" fill="url(#leaf)"/>
+      <circle class="blossom" cx="70" cy="70" r="5"/>
+      <circle class="blossom" cx="95" cy="58" r="4"/>
+      <circle class="blossom" cx="120" cy="72" r="5"/>
+      <circle class="blossom" cx="82" cy="96" r="4"/>
+      <circle class="blossom" cx="112" cy="98" r="4"/>
+      <circle class="blossom" cx="100" cy="84" r="4.5"/>
+    </svg>
+  </div>
+  <div class="gate-greeting">
+    <p class="ek">welcome</p>
+    <p class="greet-line">Welcome to a little corner of the world made just for you, Chi&nbsp;Chii!</p>
+  </div>
+  <div class="gate-panel">
+    <div class="panel-card">
+      <p class="ek">one more thing</p>
+      <h2 class="gate-q">Ready for a little adventure?</h2>
+      <p class="gate-sub">say yes — I promise it's worth it.</p>
+      <div class="gate-actions">
+        <button type="button" id="gateYes">yes ✦</button>
+        <button type="button" id="gateNo">no</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONSTELLATION NAVIGATOR (built by JS) ===== -->
+<nav id="constellation" aria-label="chapters"></nav>
+
+<!-- ===== STORY ===== -->
+<main id="story">
+  {% for ch in story %}
+  <section class="chapter{% if ch.is_name %} finale{% endif %}" data-mood="{{ loop.index0 }}">
+    <div class="inner">
+      <div class="card{% if not ch.is_name %} tilt{% endif %}">
+        {% if ch.eyebrow %}<p class="ek">{{ ch.eyebrow }}</p>{% endif %}
+        {% if ch.is_name %}
+          <h1 class="name">{{ ch.text }}</h1>
+          <p class="line" data-text="{{ ch.closer }}"></p>
+
+          <!-- interactive reply -->
+          <div id="replyBox">
+            <p class="reply-label">leave a star for me</p>
+            <div class="field">
+              <textarea id="replyInput" maxlength="280" placeholder="say something back…"></textarea>
+              <span id="charCount">0 / 280</span>
+            </div>
+            <button type="button" id="replyBtn"><span>send it to the sky</span> ✦</button>
+            <p id="replyStatus"></p>
+          </div>
+
+          <p class="closer">🌙 &nbsp; — yours, across the stars &nbsp; 🌙</p>
+        {% else %}
+          <p class="line" data-text="{{ ch.text }}"></p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+</main>
+
+<div id="scrollCue"><span>scroll</span><div class="ar"></div></div>
+
+<script src="{{ url_for('static', filename='js/main.js', v=asset_v('js/main.js')) }}"></script>
+</body>
+</html>
