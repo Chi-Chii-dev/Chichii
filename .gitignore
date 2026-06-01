@@ -1,8 +1,7 @@
 # runtime data
 echoes.json
 
-# audio — copyrighted, do not distribute (kept local only)
-static/audio/*.mp3
+# audio — host only the chosen background track; ignore any other audio files
 static/audio/*.m4a
 static/audio/*.ogg
 static/audio/*.wav
