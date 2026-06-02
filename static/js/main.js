@@ -192,34 +192,46 @@ let noTries = 0;
 const noPhrases = ['no', 'are you sure?', 'really?', 'think again', 'last chance…', 'just say yes ✦', 'please? 🥺', "you can't catch me", '😌', 'yes is right there →'];
 
 let lastDodge = 0;
+const clampN = (v, a, b) => Math.min(b, Math.max(a, v));
 function rectsOverlap(a, b, m) {
   return !(a.right + m < b.left || a.left - m > b.right || a.bottom + m < b.top || a.top - m > b.bottom);
 }
 function dodge() {
+  // IMPORTANT: .gate-panel has a CSS transform, which would make `fixed` relative
+  // to the panel (a short box at the bottom on mobile). Re-parent to the gate root
+  // (no transform) so positioning is truly viewport-relative and never goes off-screen.
+  if (gateNo.parentElement !== gate) { gate.appendChild(gateNo); gateNo.style.zIndex = '130'; }
+
   const r = gateNo.getBoundingClientRect();
   const w = r.width || 90, h = r.height || 44;
-  const pad = 14;
-  const maxX = Math.max(pad, innerWidth - w - pad);
-  const maxY = Math.max(pad, innerHeight - h - pad);
+  const vv = window.visualViewport;
+  const VW = vv ? vv.width : innerWidth, VH = vv ? vv.height : innerHeight;
+  const ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+  const pad = 12;
+  const minX = ox + pad, maxX = Math.max(minX, ox + VW - w - pad);
+  const minY = oy + pad, maxY = Math.max(minY, oy + VH - h - pad);
+  const hop = Math.min(VW, VH) * 0.4;     // bounded hop -> stays near, never flies away
   const yes = gateYes.getBoundingClientRect();
-  let x, y, t = 0;
+  let x = r.left, y = r.top, t = 0;
   do {
-    x = pad + Math.random() * (maxX - pad);
-    y = pad + Math.random() * (maxY - pad);
+    const ang = Math.random() * Math.PI * 2;
+    const dist = hop * (0.55 + Math.random() * 0.45);
+    x = clampN(r.left + Math.cos(ang) * dist, minX, maxX);
+    y = clampN(r.top + Math.sin(ang) * dist, minY, maxY);
     t++;
-  } while (t < 12 && rectsOverlap({ left: x, top: y, right: x + w, bottom: y + h }, yes, 16));
+  } while (t < 16 && rectsOverlap({ left: x, top: y, right: x + w, bottom: y + h }, yes, 16));
   gateNo.style.position = 'fixed';
   gateNo.style.left = x + 'px';
   gateNo.style.top = y + 'px';
   gateNo.style.margin = '0';
-  gateNo.style.transform = 'none';   // x,y are top-left, so it always stays fully on-screen
+  gateNo.style.transform = 'none';
   lastDodge = Date.now();
   noTries++;
   gateNo.textContent = noPhrases[Math.min(noTries, noPhrases.length - 1)];
 }
 // flee when the cursor advances toward it (stays visible, just changes position)
 window.addEventListener('pointermove', e => {
-  if (!gate.classList.contains('split')) return;
+  if (!gate.classList.contains('split') || gate.classList.contains('done')) return;
   if (Date.now() - lastDodge < 220) return;
   const r = gateNo.getBoundingClientRect();
   const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
