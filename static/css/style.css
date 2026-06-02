@@ -96,9 +96,11 @@ body.locked { overflow: hidden; height: 100vh; }
   background: linear-gradient(120deg, var(--rose), var(--rose-deep)); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 1px 10px rgba(255,255,255,.5)); }
 
-/* the heart that drops in at the start */
-.fallingHeart { position: absolute; left: 50%; top: -15%; transform: translateX(-50%); font-size: clamp(2.6rem, 8vw, 5rem); line-height: 1; filter: drop-shadow(0 10px 18px rgba(216,51,106,.4)); animation: heartFall 1.35s cubic-bezier(.55,0,.45,1) forwards; }
-#gate.bloomed .fallingHeart { opacity: 0; transition: opacity .5s ease; }
+/* the letter X that drops in, then dissolves into the blooming tree */
+.fallingX { position: absolute; left: 50%; top: -15%; transform: translateX(-50%); font-family: 'Marcellus', serif; font-weight: 400; font-size: clamp(3.4rem, 11vw, 7rem); line-height: 1;
+  background: linear-gradient(120deg, var(--rose), var(--gold), var(--rose-deep)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 8px 16px rgba(216,51,106,.4)); animation: heartFall 1.35s cubic-bezier(.55,0,.45,1) forwards; }
+#gate.bloomed .fallingX { opacity: 0; transform: translateX(-50%) scale(1.7); animation: none; transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1); }
 @keyframes heartFall {
   0%   { top: -15%; opacity: 0; transform: translateX(-50%) rotate(-12deg) scale(.85); }
   14%  { opacity: 1; }
@@ -155,7 +157,7 @@ body.locked { overflow: hidden; height: 100vh; }
   .gate-greeting { top: 7%; }
   .heartTree { height: clamp(170px, 36vh, 290px); bottom: 16%; }
   #gate.split .heartTree { left: 50%; bottom: auto; top: 4%; transform: translateX(-50%) scale(.85); }
-  .fallingHeart { animation-name: heartFallMobile; }
+  .fallingX { animation-name: heartFallMobile; }
 }
 @keyframes heartFallMobile {
   0%   { top: -15%; opacity: 0; transform: translateX(-50%) rotate(-12deg) scale(.85); }

@@ -191,40 +191,37 @@ const gateNo = document.getElementById('gateNo');
 let noTries = 0;
 const noPhrases = ['no', 'are you sure?', 'really?', 'think again', 'last chance…', 'just say yes ✦', 'please? 🥺', "you can't catch me", '😌', 'yes is right there →'];
 
-let lastDodge = 0;
+let lastDodge = 0, noTx = 0, noTy = 0;
 const clampN = (v, a, b) => Math.min(b, Math.max(a, v));
 function rectsOverlap(a, b, m) {
   return !(a.right + m < b.left || a.left - m > b.right || a.bottom + m < b.top || a.top - m > b.bottom);
 }
 function dodge() {
-  // IMPORTANT: .gate-panel has a CSS transform, which would make `fixed` relative
-  // to the panel (a short box at the bottom on mobile). Re-parent to the gate root
-  // (no transform) so positioning is truly viewport-relative and never goes off-screen.
-  if (gateNo.parentElement !== gate) { gate.appendChild(gateNo); gateNo.style.zIndex = '130'; }
-
+  // Move with a relative transform (NOT fixed/absolute). getBoundingClientRect is
+  // viewport-relative regardless of ancestor transforms/filters, so this is robust
+  // on both mobile and desktop and always stays fully on-screen.
   const r = gateNo.getBoundingClientRect();
   const w = r.width || 90, h = r.height || 44;
   const vv = window.visualViewport;
   const VW = vv ? vv.width : innerWidth, VH = vv ? vv.height : innerHeight;
   const ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
   const pad = 12;
+  const baseL = r.left - noTx, baseT = r.top - noTy;        // its in-flow top-left
   const minX = ox + pad, maxX = Math.max(minX, ox + VW - w - pad);
   const minY = oy + pad, maxY = Math.max(minY, oy + VH - h - pad);
-  const hop = Math.min(VW, VH) * 0.4;     // bounded hop -> stays near, never flies away
+  const hop = Math.min(VW, VH) * 0.38;                       // bounded hop -> stays near
   const yes = gateYes.getBoundingClientRect();
-  let x = r.left, y = r.top, t = 0;
+  let destL = r.left, destT = r.top, t = 0;
   do {
     const ang = Math.random() * Math.PI * 2;
     const dist = hop * (0.55 + Math.random() * 0.45);
-    x = clampN(r.left + Math.cos(ang) * dist, minX, maxX);
-    y = clampN(r.top + Math.sin(ang) * dist, minY, maxY);
+    destL = clampN(r.left + Math.cos(ang) * dist, minX, maxX);
+    destT = clampN(r.top + Math.sin(ang) * dist, minY, maxY);
     t++;
-  } while (t < 16 && rectsOverlap({ left: x, top: y, right: x + w, bottom: y + h }, yes, 16));
-  gateNo.style.position = 'fixed';
-  gateNo.style.left = x + 'px';
-  gateNo.style.top = y + 'px';
-  gateNo.style.margin = '0';
-  gateNo.style.transform = 'none';
+  } while (t < 18 && rectsOverlap({ left: destL, top: destT, right: destL + w, bottom: destT + h }, yes, 14));
+  noTx = destL - baseL;
+  noTy = destT - baseT;
+  gateNo.style.transform = `translate(${noTx}px, ${noTy}px)`;
   lastDodge = Date.now();
   noTries++;
   gateNo.textContent = noPhrases[Math.min(noTries, noPhrases.length - 1)];
