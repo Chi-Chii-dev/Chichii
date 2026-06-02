@@ -18,8 +18,11 @@ app = Flask(__name__)
 # Storage. Replies persist in Supabase when configured (survives redeploys);
 # otherwise they fall back to a local JSON file for development.
 # ----------------------------------------------------------------------------
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+# Defaults are baked in so persistence works without any dashboard config.
+# The publishable key is public-safe (Row-Level Security restricts it to
+# insert/select on the echoes table). Env vars override if set.
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://eemcfihirbziubndronx.supabase.co").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_eFM2Ghq8Bu1Eqg36H-0xZA_c5ol1SZd")
 SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "echoes")
 USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)
 
