@@ -97,9 +97,8 @@ body.locked { overflow: hidden; height: 100vh; }
   filter: drop-shadow(0 1px 10px rgba(255,255,255,.5)); }
 
 /* the letter X that drops in, then dissolves into the blooming tree */
-.fallingX { position: absolute; left: 50%; top: -15%; transform: translateX(-50%); font-family: 'Marcellus', serif; font-weight: 400; font-size: clamp(3.4rem, 11vw, 7rem); line-height: 1;
-  background: linear-gradient(120deg, var(--rose), var(--gold), var(--rose-deep)); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 8px 16px rgba(216,51,106,.4)); animation: heartFall 1.35s cubic-bezier(.55,0,.45,1) forwards; }
+.fallingX { position: absolute; left: 50%; top: -15%; transform: translateX(-50%); font-family: 'Marcellus', serif; font-weight: 500; font-size: clamp(3.4rem, 11vw, 7rem); line-height: 1; color: #000;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.25)); animation: heartFall 1.35s cubic-bezier(.55,0,.45,1) forwards; }
 #gate.bloomed .fallingX { opacity: 0; transform: translateX(-50%) scale(1.7); animation: none; transition: opacity .7s ease, transform 1s cubic-bezier(.2,.8,.2,1); }
 @keyframes heartFall {
   0%   { top: -15%; opacity: 0; transform: translateX(-50%) rotate(-12deg) scale(.85); }
