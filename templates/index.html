@@ -21,7 +21,10 @@
 
 <!-- background music — drop your own "Calm Down" file at static/audio/calm-down.mp3 -->
 <audio id="bgm" loop preload="auto" src="{{ url_for('static', filename='audio/calm-down.mp3') }}"></audio>
-<button type="button" id="soundToggle" aria-label="toggle music" title="music">🔊</button>
+<div id="soundDock">
+  <button type="button" id="soundToggle" aria-label="toggle music" title="music">🔊</button>
+  <span id="soundHint">you don't have a favourite song, so… tap to hear mine ♪</span>
+</div>
 
 <!-- ===== INTRO: gather the light ===== -->
 <div id="intro">

@@ -227,7 +227,9 @@ setTimeout(() => gate.classList.add('split'), 4300);
    ============================================================ */
 const bgm = document.getElementById('bgm');
 const soundToggle = document.getElementById('soundToggle');
+const soundHint = document.getElementById('soundHint');
 let soundOn = true, fadeTimer = null;
+function hideHint() { if (soundHint) { soundHint.classList.add('hide'); soundHint.classList.remove('show'); } }
 
 function fadeTo(target, ms) {
   if (!bgm) return;
@@ -244,7 +246,7 @@ function startBgm() {
   if (!bgm || !soundOn) return;
   bgm.muted = false;
   const p = bgm.play();
-  if (p && p.then) p.then(() => fadeTo(0.35, 1600)).catch(() => {});
+  if (p && p.then) p.then(() => { fadeTo(0.35, 1600); hideHint(); }).catch(() => {});
 }
 
 if (bgm) {
@@ -254,12 +256,15 @@ if (bgm) {
   ['pointerdown', 'touchstart', 'keydown'].forEach(ev =>
     window.addEventListener(ev, startBgm, { once: true }));
 }
+// nudge her to tap the speaker for the song (only if it isn't already playing)
+setTimeout(() => { if (soundHint && bgm && bgm.paused) soundHint.classList.add('show'); }, 1000);
 
 if (soundToggle) {
   soundToggle.addEventListener('click', () => {
     soundOn = !soundOn;
     soundToggle.classList.toggle('off', !soundOn);
     soundToggle.textContent = soundOn ? '🔊' : '🔇';
+    hideHint();
     if (soundOn) { startBgm(); }
     else { fadeTo(0, 500); setTimeout(() => { if (!soundOn && bgm) bgm.pause(); }, 520); }
   });
