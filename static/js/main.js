@@ -62,7 +62,7 @@ function buildMotes() {
       x: Math.random() * IW, y: Math.random() * IH,
       tx: tgt.x, ty: tgt.y, r: Math.random() * 1.6 + 0.6,
       gathered: false, tw: Math.random() * 6.28, sp: Math.random() * 0.02 + 0.005,
-      hue: Math.random() < 0.45 ? '255,140,180' : (Math.random() < 0.5 ? '247,200,115' : '255,255,255'),
+      hue: Math.random() < 0.5 ? '226,74,124' : (Math.random() < 0.5 ? '201,133,43' : '176,35,86'),
       vx: 0, vy: 0
     });
   }
@@ -113,7 +113,7 @@ function introLoop() {
 
   iStars.forEach(s => {
     s.tw += s.sp; const a = s.b + Math.sin(s.tw) * 0.3;
-    ix.fillStyle = `rgba(255,214,228,${Math.max(0, a)})`;
+    ix.fillStyle = `rgba(226,74,124,${Math.max(0, a)})`;
     ix.beginPath(); ix.arc(s.x, s.y, s.r, 0, 7); ix.fill();
   });
 
@@ -145,19 +145,19 @@ function introLoop() {
     g.addColorStop(0.4, `rgba(${m.hue},${0.2 * tw})`);
     g.addColorStop(1, `rgba(${m.hue},0)`);
     ix.fillStyle = g; ix.beginPath(); ix.arc(m.x, m.y, R * 5, 0, 7); ix.fill();
-    ix.fillStyle = `rgba(255,255,255,${(m.gathered ? 1 : 0.6) * tw})`;
+    ix.fillStyle = `rgba(176,35,86,${(m.gathered ? 1 : 0.6) * tw})`;
     ix.beginPath(); ix.arc(m.x, m.y, R, 0, 7); ix.fill();
   });
 
   // hand-glow + gather progress ring around the pointer
   if (imx > 0) {
     const g = ix.createRadialGradient(imx, imy, 0, imx, imy, 46);
-    g.addColorStop(0, 'rgba(255,140,180,0.3)'); g.addColorStop(1, 'rgba(255,140,180,0)');
+    g.addColorStop(0, 'rgba(226,74,124,0.3)'); g.addColorStop(1, 'rgba(226,74,124,0)');
     ix.fillStyle = g; ix.beginPath(); ix.arc(imx, imy, 46, 0, 7); ix.fill();
 
     const prog = Math.min(1, gatheredCount / (MOTES * 0.45));
     ix.beginPath(); ix.arc(imx, imy, 30, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
-    ix.strokeStyle = 'rgba(255,210,122,.9)'; ix.lineWidth = 2; ix.lineCap = 'round'; ix.stroke();
+    ix.strokeStyle = 'rgba(176,35,86,.9)'; ix.lineWidth = 2; ix.lineCap = 'round'; ix.stroke();
   }
   requestAnimationFrame(introLoop);
 }
@@ -351,7 +351,7 @@ sSize();
 let sStars = [];
 function buildSStars() {
   sStars = []; const c = Math.floor((SW * SH) / 7000);
-  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.35 ? '255,140,180' : (Math.random() < 0.25 ? '247,200,115' : '255,255,255'), depth: Math.random() * 0.6 + 0.2 });
+  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.4 ? '226,74,124' : (Math.random() < 0.3 ? '201,133,43' : '176,35,86'), depth: Math.random() * 0.6 + 0.2 });
 }
 buildSStars();
 
@@ -379,9 +379,9 @@ function storyLoop(ts) {
   for (let i = sShooters.length - 1; i >= 0; i--) {
     const sh = sShooters[i]; sh.x += sh.vx; sh.y += sh.vy; sh.life -= sh.decay;
     const h = Math.hypot(sh.vx, sh.vy); const tx = sh.x - sh.vx / h * sh.len, ty = sh.y - sh.vy / h * sh.len;
-    const g = sx.createLinearGradient(sh.x, sh.y, tx, ty); g.addColorStop(0, `rgba(255,240,210,${sh.life})`); g.addColorStop(1, 'rgba(255,240,210,0)');
+    const g = sx.createLinearGradient(sh.x, sh.y, tx, ty); g.addColorStop(0, `rgba(216,51,106,${sh.life})`); g.addColorStop(1, 'rgba(216,51,106,0)');
     sx.strokeStyle = g; sx.lineWidth = sh.w; sx.lineCap = 'round'; sx.beginPath(); sx.moveTo(sh.x, sh.y); sx.lineTo(tx, ty); sx.stroke();
-    sx.fillStyle = `rgba(255,255,255,${sh.life})`; sx.beginPath(); sx.arc(sh.x, sh.y, sh.w, 0, 7); sx.fill();
+    sx.fillStyle = `rgba(176,35,86,${sh.life})`; sx.beginPath(); sx.arc(sh.x, sh.y, sh.w, 0, 7); sx.fill();
     if (sh.life <= 0 || sh.y > SH + 50 || sh.x > SW + 50) sShooters.splice(i, 1);
   }
   if (ts - lastSh > 2600 + Math.random() * 3200) { sSpawn(); lastSh = ts; }
