@@ -78,19 +78,18 @@ function buildIStars() {
 buildIStars();
 
 let gatheredCount = 0, introActive = true, imx = -999, imy = -999;
-let whisperShown = false;
+let whisperShown = false, introRevealAt = 0;
 
-function introMove(x, y) {
-  imx = x; imy = y;
-  const reach = Math.min(IW, IH) * 0.12;
-  motes.forEach(m => {
-    if (!m.gathered && Math.hypot(x - m.x, y - m.y) < reach) {
-      m.gathered = true; gatheredCount++;
-      if (gatheredCount > MOTES * 0.3 && !whisperShown) { whisperShown = true; fetchWhisper(); }
-      if (gatheredCount >= MOTES * 0.92) showEnter();
-    }
-  });
+// gather a single mote and trip the soft milestones (easy, low-pressure targets)
+function gatherMote(m) {
+  if (m.gathered) return;
+  m.gathered = true; gatheredCount++;
+  if (gatheredCount > MOTES * 0.15 && !whisperShown) { whisperShown = true; fetchWhisper(); }
+  if (gatheredCount >= MOTES * 0.45) showEnter();
 }
+
+// the pointer just records where her hand is; the loop does the gentle gathering
+function introMove(x, y) { imx = x; imy = y; }
 const introEl = document.getElementById('intro');
 introEl.addEventListener('mousemove', e => introMove(e.clientX, e.clientY));
 introEl.addEventListener('touchmove', e => { const t = e.touches[0]; introMove(t.clientX, t.clientY); }, { passive: true });
@@ -118,12 +117,25 @@ function introLoop() {
     ix.beginPath(); ix.arc(s.x, s.y, s.r, 0, 7); ix.fill();
   });
 
+  // if she pauses, the light gently drifts in on its own — never a dead end
+  if (introRevealAt && !entered && gatheredCount < MOTES * 0.5 &&
+      (Date.now() - introRevealAt) > 4500) {
+    const m = motes.find(x => !x.gathered); if (m) gatherMote(m);
+  }
+
+  const reach = Math.min(IW, IH) * 0.17;   // generous, forgiving touch radius
+  const pull = Math.min(IW, IH) * 0.27;    // motes lean toward her hand (magnetic)
   motes.forEach(m => {
     m.tw += m.sp;
     if (m.gathered) {
       m.vx += (m.tx - m.x) * 0.02; m.vy += (m.ty - m.y) * 0.02;
       m.vx *= 0.86; m.vy *= 0.86; m.x += m.vx; m.y += m.vy;
     } else {
+      if (imx > 0) {
+        const dx = imx - m.x, dy = imy - m.y, d = Math.hypot(dx, dy);
+        if (d < reach) gatherMote(m);
+        else if (d < pull) { m.x += dx * 0.05; m.y += dy * 0.05; }
+      }
       m.x += Math.cos(m.tw) * 0.2; m.y += Math.sin(m.tw * 0.8) * 0.2;
     }
     const tw = 0.6 + 0.4 * Math.sin(m.tw * 2);
@@ -143,7 +155,7 @@ function introLoop() {
     g.addColorStop(0, 'rgba(244,136,154,0.25)'); g.addColorStop(1, 'rgba(244,136,154,0)');
     ix.fillStyle = g; ix.beginPath(); ix.arc(imx, imy, 46, 0, 7); ix.fill();
 
-    const prog = Math.min(1, gatheredCount / (MOTES * 0.92));
+    const prog = Math.min(1, gatheredCount / (MOTES * 0.45));
     ix.beginPath(); ix.arc(imx, imy, 30, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
     ix.strokeStyle = 'rgba(225,29,58,.9)'; ix.lineWidth = 2; ix.lineCap = 'round'; ix.stroke();
   }
@@ -168,7 +180,7 @@ function enterStory() {
   window.scrollTo(0, 0);
 }
 document.getElementById('enterPrompt').addEventListener('click', enterStory);
-introEl.addEventListener('click', () => { if (gatheredCount >= MOTES * 0.6) enterStory(); });
+introEl.addEventListener('click', () => { if (gatheredCount >= MOTES * 0.3) enterStory(); });
 
 /* ============================================================
    READY GATE — a playful yes/no before the letter ("no" runs)
@@ -202,6 +214,9 @@ function closeGate() {
   // fade the gather-the-light intro in beneath the closing gate
   introEl.style.opacity = '1';
   introEl.style.pointerEvents = 'auto';
+  introRevealAt = Date.now();
+  // safety net: the way in always appears, no matter what
+  setTimeout(() => { if (!entered) showEnter(); }, 7000);
 }
 gateYes.addEventListener('click', closeGate);
 
@@ -228,7 +243,7 @@ setTimeout(() => gate.classList.add('split'), 4300);
 const bgm = document.getElementById('bgm');
 const soundToggle = document.getElementById('soundToggle');
 const soundHint = document.getElementById('soundHint');
-let soundOn = true, fadeTimer = null;
+let playing = false, fadeTimer = null;       // `playing` is our reliable source of truth
 function hideHint() { if (soundHint) { soundHint.classList.add('hide'); soundHint.classList.remove('show'); } }
 
 function fadeTo(target, ms) {
@@ -242,33 +257,51 @@ function fadeTo(target, ms) {
   }, ms / steps);
 }
 
-function startBgm() {
-  if (!bgm || !soundOn) return;
+function detachFirstGesture() {
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.removeEventListener(ev, firstGesture));
+}
+
+// start the song. `immediate` = near-instant (used for an explicit speaker tap)
+function playNow(immediate) {
+  if (!bgm) return;
+  playing = true;
   bgm.muted = false;
   const p = bgm.play();
-  if (p && p.then) p.then(() => { fadeTo(0.35, 1600); hideHint(); }).catch(() => {});
+  if (p && p.catch) p.catch(() => {});
+  fadeTo(0.35, immediate ? 180 : 1500);
+  if (soundToggle) { soundToggle.classList.remove('off'); soundToggle.textContent = '🔊'; }
+  hideHint();
+  detachFirstGesture();
+}
+
+function stopNow() {
+  playing = false;
+  if (soundToggle) { soundToggle.classList.add('off'); soundToggle.textContent = '🔇'; }
+  fadeTo(0, 350);
+  setTimeout(() => { if (!playing && bgm) bgm.pause(); }, 380);
+}
+
+// first interaction anywhere starts the music — but ignore taps on the speaker,
+// so its own click handler controls it (prevents a start/stop race)
+function firstGesture(e) {
+  if (e.target && e.target.closest && e.target.closest('#soundDock')) return;
+  playNow(false);
 }
 
 if (bgm) {
   bgm.volume = 0;
-  startBgm();   // try immediately (browsers may defer until a gesture)
-  // browsers block audio until the first interaction — start it then
-  ['pointerdown', 'touchstart', 'keydown'].forEach(ev =>
-    window.addEventListener(ev, startBgm, { once: true }));
+  const p0 = bgm.play();   // optimistic autoplay (usually blocked until a gesture)
+  if (p0 && p0.then) p0.then(() => { playing = true; fadeTo(0.35, 1600); hideHint(); detachFirstGesture(); }).catch(() => {});
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, firstGesture));
 }
-// nudge her to tap the speaker for the song (only if it isn't already playing)
-setTimeout(() => { if (soundHint && bgm && bgm.paused) soundHint.classList.add('show'); }, 1000);
 
+// the speaker: tap once -> plays immediately; tap again -> mutes
 if (soundToggle) {
-  soundToggle.addEventListener('click', () => {
-    soundOn = !soundOn;
-    soundToggle.classList.toggle('off', !soundOn);
-    soundToggle.textContent = soundOn ? '🔊' : '🔇';
-    hideHint();
-    if (soundOn) { startBgm(); }
-    else { fadeTo(0, 500); setTimeout(() => { if (!soundOn && bgm) bgm.pause(); }, 520); }
-  });
+  soundToggle.addEventListener('click', () => { hideHint(); if (playing) stopNow(); else playNow(true); });
 }
+
+// nudge her to tap the speaker (only if nothing is playing yet)
+setTimeout(() => { if (soundHint && !playing) soundHint.classList.add('show'); }, 1000);
 
 window.addEventListener('resize', () => { iSize(); buildMotes(); buildIStars(); motes.forEach((m, i) => { const t = heartTarget(i, MOTES); m.tx = t.x; m.ty = t.y; }); });
 
