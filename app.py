@@ -151,5 +151,15 @@ def echoes():
     return jsonify({"echoes": load_echoes()})
 
 
+@app.route("/api/health")
+def health():
+    """Diagnostic: does the running server see the Supabase config? (no secrets)"""
+    return jsonify({
+        "supabase_enabled": USE_SUPABASE,
+        "supabase_url_set": bool(SUPABASE_URL),
+        "supabase_key_set": bool(SUPABASE_KEY),
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=5000)
