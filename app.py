@@ -9,8 +9,35 @@ from datetime import datetime
 import json
 import os
 import random
+import urllib.request
+import urllib.error
 
 app = Flask(__name__)
+
+# ----------------------------------------------------------------------------
+# Storage. Replies persist in Supabase when configured (survives redeploys);
+# otherwise they fall back to a local JSON file for development.
+# ----------------------------------------------------------------------------
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "echoes")
+USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)
+
+
+def _sb_request(method, path, body=None, extra_headers=None):
+    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    data = json.dumps(body).encode() if body is not None else None
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        raw = resp.read().decode()
+        return json.loads(raw) if raw else []
 
 # ----------------------------------------------------------------------------
 # The story. Each chapter is one beat of the message, revealed as she scrolls.
@@ -39,11 +66,18 @@ WHISPERS = [
     "Of all the things I've built, you're the one I most wanted to get right.",
 ]
 
-# Tiny in-memory store for the interactive "leave a star" feature.
+# Local fallback store for the interactive "leave a star" feature.
 DATA_FILE = os.path.join(os.path.dirname(__file__), "echoes.json")
 
 
 def load_echoes():
+    """Return all replies, oldest first, as [{message, at}]."""
+    if USE_SUPABASE:
+        try:
+            rows = _sb_request("GET", f"{SUPABASE_TABLE}?select=message,at&order=at.asc")
+            return rows or []
+        except Exception:
+            return []
     try:
         with open(DATA_FILE) as f:
             return json.load(f)
@@ -51,9 +85,23 @@ def load_echoes():
         return []
 
 
-def save_echoes(echoes):
-    with open(DATA_FILE, "w") as f:
-        json.dump(echoes, f, indent=2)
+def add_echo(message, at):
+    """Persist a single reply. Returns True on success."""
+    if USE_SUPABASE:
+        try:
+            _sb_request("POST", SUPABASE_TABLE, body={"message": message, "at": at},
+                        extra_headers={"Prefer": "return=minimal"})
+            return True
+        except Exception:
+            return False
+    try:
+        echoes = load_echoes()
+        echoes.append({"message": message, "at": at})
+        with open(DATA_FILE, "w") as f:
+            json.dump(echoes, f, indent=2)
+        return True
+    except OSError:
+        return False
 
 
 @app.context_processor
@@ -91,13 +139,10 @@ def echo():
     if not message:
         return jsonify({"ok": False, "error": "empty"}), 400
 
-    echoes = load_echoes()
-    echoes.append({
-        "message": message,
-        "at": datetime.utcnow().isoformat() + "Z",
-    })
-    save_echoes(echoes)
-    return jsonify({"ok": True, "count": len(echoes)})
+    at = datetime.utcnow().isoformat() + "Z"
+    if not add_echo(message, at):
+        return jsonify({"ok": False, "error": "store"}), 500
+    return jsonify({"ok": True})
 
 
 @app.route("/api/echoes")

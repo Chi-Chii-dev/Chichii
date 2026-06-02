@@ -8,3 +8,7 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.10
+      - key: SUPABASE_URL
+        value: https://eemcfihirbziubndronx.supabase.co
+      - key: SUPABASE_KEY
+        value: sb_publishable_eFM2Ghq8Bu1Eqg36H-0xZA_c5ol1SZd
