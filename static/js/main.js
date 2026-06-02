@@ -62,7 +62,7 @@ function buildMotes() {
       x: Math.random() * IW, y: Math.random() * IH,
       tx: tgt.x, ty: tgt.y, r: Math.random() * 1.6 + 0.6,
       gathered: false, tw: Math.random() * 6.28, sp: Math.random() * 0.02 + 0.005,
-      hue: Math.random() < 0.4 ? '143,208,255' : (Math.random() < 0.5 ? '255,210,122' : '255,255,255'),
+      hue: Math.random() < 0.45 ? '255,140,180' : (Math.random() < 0.5 ? '247,200,115' : '255,255,255'),
       vx: 0, vy: 0
     });
   }
@@ -113,7 +113,7 @@ function introLoop() {
 
   iStars.forEach(s => {
     s.tw += s.sp; const a = s.b + Math.sin(s.tw) * 0.3;
-    ix.fillStyle = `rgba(200,225,255,${Math.max(0, a)})`;
+    ix.fillStyle = `rgba(255,214,228,${Math.max(0, a)})`;
     ix.beginPath(); ix.arc(s.x, s.y, s.r, 0, 7); ix.fill();
   });
 
@@ -152,7 +152,7 @@ function introLoop() {
   // hand-glow + gather progress ring around the pointer
   if (imx > 0) {
     const g = ix.createRadialGradient(imx, imy, 0, imx, imy, 46);
-    g.addColorStop(0, 'rgba(143,208,255,0.28)'); g.addColorStop(1, 'rgba(143,208,255,0)');
+    g.addColorStop(0, 'rgba(255,140,180,0.3)'); g.addColorStop(1, 'rgba(255,140,180,0)');
     ix.fillStyle = g; ix.beginPath(); ix.arc(imx, imy, 46, 0, 7); ix.fill();
 
     const prog = Math.min(1, gatheredCount / (MOTES * 0.45));
@@ -339,7 +339,7 @@ sSize();
 let sStars = [];
 function buildSStars() {
   sStars = []; const c = Math.floor((SW * SH) / 7000);
-  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.3 ? '143,208,255' : (Math.random() < 0.25 ? '255,210,122' : '255,255,255'), depth: Math.random() * 0.6 + 0.2 });
+  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.35 ? '255,140,180' : (Math.random() < 0.25 ? '247,200,115' : '255,255,255'), depth: Math.random() * 0.6 + 0.2 });
 }
 buildSStars();
 
