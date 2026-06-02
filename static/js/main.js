@@ -62,7 +62,7 @@ function buildMotes() {
       x: Math.random() * IW, y: Math.random() * IH,
       tx: tgt.x, ty: tgt.y, r: Math.random() * 1.6 + 0.6,
       gathered: false, tw: Math.random() * 6.28, sp: Math.random() * 0.02 + 0.005,
-      hue: Math.random() < 0.45 ? '225,40,64' : (Math.random() < 0.5 ? '244,136,154' : '155,18,38'),
+      hue: Math.random() < 0.4 ? '143,208,255' : (Math.random() < 0.5 ? '255,210,122' : '255,255,255'),
       vx: 0, vy: 0
     });
   }
@@ -113,7 +113,7 @@ function introLoop() {
 
   iStars.forEach(s => {
     s.tw += s.sp; const a = s.b + Math.sin(s.tw) * 0.3;
-    ix.fillStyle = `rgba(225,40,64,${Math.max(0, a)})`;
+    ix.fillStyle = `rgba(200,225,255,${Math.max(0, a)})`;
     ix.beginPath(); ix.arc(s.x, s.y, s.r, 0, 7); ix.fill();
   });
 
@@ -145,19 +145,19 @@ function introLoop() {
     g.addColorStop(0.4, `rgba(${m.hue},${0.2 * tw})`);
     g.addColorStop(1, `rgba(${m.hue},0)`);
     ix.fillStyle = g; ix.beginPath(); ix.arc(m.x, m.y, R * 5, 0, 7); ix.fill();
-    ix.fillStyle = `rgba(190,22,48,${(m.gathered ? 1 : 0.6) * tw})`;
+    ix.fillStyle = `rgba(255,255,255,${(m.gathered ? 1 : 0.6) * tw})`;
     ix.beginPath(); ix.arc(m.x, m.y, R, 0, 7); ix.fill();
   });
 
   // hand-glow + gather progress ring around the pointer
   if (imx > 0) {
     const g = ix.createRadialGradient(imx, imy, 0, imx, imy, 46);
-    g.addColorStop(0, 'rgba(244,136,154,0.25)'); g.addColorStop(1, 'rgba(244,136,154,0)');
+    g.addColorStop(0, 'rgba(143,208,255,0.28)'); g.addColorStop(1, 'rgba(143,208,255,0)');
     ix.fillStyle = g; ix.beginPath(); ix.arc(imx, imy, 46, 0, 7); ix.fill();
 
     const prog = Math.min(1, gatheredCount / (MOTES * 0.45));
     ix.beginPath(); ix.arc(imx, imy, 30, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
-    ix.strokeStyle = 'rgba(225,29,58,.9)'; ix.lineWidth = 2; ix.lineCap = 'round'; ix.stroke();
+    ix.strokeStyle = 'rgba(255,210,122,.9)'; ix.lineWidth = 2; ix.lineCap = 'round'; ix.stroke();
   }
   requestAnimationFrame(introLoop);
 }
@@ -191,19 +191,41 @@ const gateNo = document.getElementById('gateNo');
 let noTries = 0;
 const noPhrases = ['no', 'are you sure?', 'really?', 'think again', 'last chance…', 'just say yes ✦', 'please? 🥺', "you can't catch me", '😌', 'yes is right there →'];
 
+let lastDodge = 0;
+function rectsOverlap(a, b, m) {
+  return !(a.right + m < b.left || a.left - m > b.right || a.bottom + m < b.top || a.top - m > b.bottom);
+}
 function dodge() {
-  const pad = 70;
-  const x = pad + Math.random() * (innerWidth - pad * 2);
-  const y = pad + Math.random() * (innerHeight - pad * 2);
+  const r = gateNo.getBoundingClientRect();
+  const w = r.width || 90, h = r.height || 44;
+  const pad = 14;
+  const maxX = Math.max(pad, innerWidth - w - pad);
+  const maxY = Math.max(pad, innerHeight - h - pad);
+  const yes = gateYes.getBoundingClientRect();
+  let x, y, t = 0;
+  do {
+    x = pad + Math.random() * (maxX - pad);
+    y = pad + Math.random() * (maxY - pad);
+    t++;
+  } while (t < 12 && rectsOverlap({ left: x, top: y, right: x + w, bottom: y + h }, yes, 16));
   gateNo.style.position = 'fixed';
   gateNo.style.left = x + 'px';
   gateNo.style.top = y + 'px';
   gateNo.style.margin = '0';
-  gateNo.style.transform = 'translate(-50%, -50%)';
+  gateNo.style.transform = 'none';   // x,y are top-left, so it always stays fully on-screen
+  lastDodge = Date.now();
   noTries++;
   gateNo.textContent = noPhrases[Math.min(noTries, noPhrases.length - 1)];
 }
-gateNo.addEventListener('pointerenter', dodge);
+// flee when the cursor advances toward it (stays visible, just changes position)
+window.addEventListener('pointermove', e => {
+  if (!gate.classList.contains('split')) return;
+  if (Date.now() - lastDodge < 220) return;
+  const r = gateNo.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  if (Math.hypot(e.clientX - cx, e.clientY - cy) < 95) dodge();
+});
+// on touch, tapping it makes it hop away too
 gateNo.addEventListener('pointerdown', e => { e.preventDefault(); dodge(); });
 
 // "yes" closes the gate and reveals the gather-the-light intro beneath it
@@ -317,7 +339,7 @@ sSize();
 let sStars = [];
 function buildSStars() {
   sStars = []; const c = Math.floor((SW * SH) / 7000);
-  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.3 ? '225,40,64' : (Math.random() < 0.25 ? '155,18,38' : '244,136,154'), depth: Math.random() * 0.6 + 0.2 });
+  for (let i = 0; i < c; i++) sStars.push({ x: Math.random() * SW, y: Math.random() * SH, r: Math.random() * 1.3 + 0.2, b: Math.random() * 0.45 + 0.12, tw: Math.random() * 6.28, sp: Math.random() * 0.013 + 0.004, hue: Math.random() < 0.3 ? '143,208,255' : (Math.random() < 0.25 ? '255,210,122' : '255,255,255'), depth: Math.random() * 0.6 + 0.2 });
 }
 buildSStars();
 
@@ -345,9 +367,9 @@ function storyLoop(ts) {
   for (let i = sShooters.length - 1; i >= 0; i--) {
     const sh = sShooters[i]; sh.x += sh.vx; sh.y += sh.vy; sh.life -= sh.decay;
     const h = Math.hypot(sh.vx, sh.vy); const tx = sh.x - sh.vx / h * sh.len, ty = sh.y - sh.vy / h * sh.len;
-    const g = sx.createLinearGradient(sh.x, sh.y, tx, ty); g.addColorStop(0, `rgba(225,40,64,${sh.life})`); g.addColorStop(1, 'rgba(225,40,64,0)');
+    const g = sx.createLinearGradient(sh.x, sh.y, tx, ty); g.addColorStop(0, `rgba(255,240,210,${sh.life})`); g.addColorStop(1, 'rgba(255,240,210,0)');
     sx.strokeStyle = g; sx.lineWidth = sh.w; sx.lineCap = 'round'; sx.beginPath(); sx.moveTo(sh.x, sh.y); sx.lineTo(tx, ty); sx.stroke();
-    sx.fillStyle = `rgba(190,22,48,${sh.life})`; sx.beginPath(); sx.arc(sh.x, sh.y, sh.w, 0, 7); sx.fill();
+    sx.fillStyle = `rgba(255,255,255,${sh.life})`; sx.beginPath(); sx.arc(sh.x, sh.y, sh.w, 0, 7); sx.fill();
     if (sh.life <= 0 || sh.y > SH + 50 || sh.x > SW + 50) sShooters.splice(i, 1);
   }
   if (ts - lastSh > 2600 + Math.random() * 3200) { sSpawn(); lastSh = ts; }
